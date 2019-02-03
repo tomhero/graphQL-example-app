@@ -22,6 +22,10 @@ const eventSchema = new Schema({
   comment: {
     type: String,
     required: false
+  },
+  creator: {
+    type: Schema.Types.ObjectId,
+    ref: 'User'
   }
 })
 

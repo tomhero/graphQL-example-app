@@ -7,7 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint ./src",
     "dev": "nodemon ./src/app.js --exec \"npm run lint && node\"",
-    "start": "nodemon ./src/app.js"
+    "start": "nodemon ./src/app.js",
+    "debug": "nodemon --inspect ./src/app.js"
   },
   "keywords": [],
   "author": "Chayut Ruksomya",
@@ -22,6 +23,7 @@
     "nodemon": "^1.18.9"
   },
   "dependencies": {
+    "bcrypt": "^3.0.3",
     "body-parser": "^1.18.3",
     "express": "^4.16.4",
     "express-graphql": "^0.7.1",
