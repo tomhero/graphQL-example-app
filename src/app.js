@@ -23,12 +23,14 @@ app.use('/graphql', graphqlHttp({
       price: Float!
       date: String!
       comment: String
+      creator: User!
     }
 
     type User {
       _id: ID!
       email: String!
       password: String
+      createdEvents: [Event!]
     }
 
     type RootQuery {
@@ -60,12 +62,16 @@ app.use('/graphql', graphqlHttp({
   `),
   rootValue: {
     events: () => {
-      return Event.find()
+      return Event.find().populate('creator')
         .then(events => {
           return events.map(event => {
             return {
               ...event._doc,
-              _id: event.id
+              _id: event.id,
+              creator: {
+                ...event._doc,
+                _id: event._doc.creator.id
+              }
             }
           })
         })
@@ -118,7 +124,9 @@ app.use('/graphql', graphqlHttp({
 mongoose.connect(`mongodb+srv://${
   process.env.MONGO_USER}:${
   process.env.MONGO_PASSWORD}@cluster0-nkwtt.mongodb.net/${
-  process.env.MONGO_DB}?retryWrites=tr0ue`)
+  process.env.MONGO_DB}?retryWrites=tr0ue`, {
+  useNewUrlParser: true
+})
   .then(() => app.listen(3000))
   .catch(err => console.log(err))
 
