@@ -14,6 +14,28 @@ const app = express()
 
 app.use(bodyParser.json())
 
+const events = eventIds => {
+  return Event.find({ _id: { $in: eventIds } })
+    .then(events => {
+      return events.map(event => {
+        return { ...event._doc, _id: event.id, creator: user.bind(this, event.creator) }
+      })
+    })
+    .catch(err => {
+      throw err
+    })
+}
+
+const user = userId => {
+  return User.findById(userId)
+    .then(user => {
+      return { ...user._doc, _id: user.id, createEvent: events.bind(this, user._doc.createdEvents) }
+    })
+    .catch(err => {
+      throw err
+    })
+}
+
 app.use('/graphql', graphqlHttp({
   schema: buildSchema(`
     type Event {
@@ -62,16 +84,13 @@ app.use('/graphql', graphqlHttp({
   `),
   rootValue: {
     events: () => {
-      return Event.find().populate('creator')
+      return Event.find()
         .then(events => {
           return events.map(event => {
             return {
               ...event._doc,
               _id: event.id,
-              creator: {
-                ...event._doc,
-                _id: event._doc.creator.id
-              }
+              creator: user.bind(this, event._doc.creator)
             }
           })
         })
@@ -84,17 +103,29 @@ app.use('/graphql', graphqlHttp({
       const event = new Event({
         title: args.eventInput.title,
         description: args.eventInput.description,
-        price: args.eventInput.price,
+        price: +args.eventInput.price,
         date: new Date(args.eventInput.date),
-        comment: args.eventInput.comment
+        comment: args.eventInput.comment,
+        creator: '5c5691b5743df3485cbb6567'
       })
-      event
+      let createdEvent
+      return event
         .save()
         .then(rs => {
-          console.log(rs)
-          return { ...rs._doc, _id: rs._doc._id.toString()
+          createdEvent = { ...rs._doc, _id: rs._doc._id.toString(), creator: user.bind(this, rs._doc.creator) }
+          return User.findById('5c5691b5743df3485cbb6567')
+        })
+        .then(user => {
+          if (!user) {
+            throw new Error('User not found.')
           }
-        }).catch(err => {
+          user.createdEvents.push(event)
+          return user.save()
+        })
+        .then(result => {
+          return createdEvent
+        })
+        .catch(err => {
           console.log(err)
           throw err
         })
